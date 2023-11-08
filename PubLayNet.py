@@ -16,19 +16,29 @@ logger = get_logger(__name__)
 
 JsonDict = Dict[str, Any]
 ImageId = int
-Bbox = Tuple[float, float, float, float]
 AnnotationId = int
 LicenseId = int
 CategoryId = int
 Bbox = Tuple[float, float, float, float]
 
-_DESCRIPTION = ""
+_DESCRIPTION = """\
+PubLayNet is a dataset for document layout analysis. It contains images of research papers and articles and annotations for various elements in a page such as "text", "list", "figure" etc in these research paper images. The dataset was obtained by automatically matching the XML representations and the content of over 1 million PDF articles that are publicly available on PubMed Central.
+"""
 
-_CITATION = ""
+_CITATION = """\
+@inproceedings{zhong2019publaynet,
+  title={Publaynet: largest dataset ever for document layout analysis},
+  author={Zhong, Xu and Tang, Jianbin and Yepes, Antonio Jimeno},
+  booktitle={2019 International Conference on Document Analysis and Recognition (ICDAR)},
+  pages={1015--1022},
+  year={2019},
+  organization={IEEE}
+}
+"""
 
-_HOMEPAGE = ""
+_HOMEPAGE = "https://developer.ibm.com/exchanges/data/all/publaynet/"
 
-_LICENSE = ""
+_LICENSE = "CDLA-Permissive"
 
 _URL = "https://dax-cdn.cdn.appdomain.cloud/dax-publaynet/1.0.0/publaynet.tar.gz"
 
@@ -101,7 +111,7 @@ class AnnotationData(object):
             rle = cocomask.frPyObjects(segmentation, h=height, w=width)
         else:
             rles = cocomask.frPyObjects(segmentation, h=height, w=width)
-            rle = cocomask.merge(rles)
+            rle = cocomask.merge(rles)  # type: ignore
 
         return rle  # type: ignore
 
@@ -157,7 +167,7 @@ class AnnotationData(object):
         return cls(
             annotation_id=json_dict["id"],
             image_id=image_id,
-            segmentation=segmentation_mask,
+            segmentation=segmentation_mask,  # type: ignore
             area=json_dict["area"],
             iscrowd=iscrowd,
             bbox=json_dict["bbox"],
@@ -215,7 +225,7 @@ def load_annotation_data(
     return labels
 
 
-def generate_examples(
+def generate_train_val_examples(
     annotations: Dict[ImageId, List[AnnotationData]],
     image_dir: pathlib.Path,
     images: Dict[ImageId, ImageData],
@@ -240,7 +250,25 @@ def generate_examples(
             ann_dict["category"] = asdict(category)
             example["annotations"].append(ann_dict)
 
-        print(example)
+        yield idx, example
+
+
+def generate_test_examples(image_dir: pathlib.Path):
+    image_paths = [f for f in image_dir.iterdir() if f.suffix == ".jpg"]
+    image_paths = sorted(image_paths)
+
+    for idx, image_path in enumerate(image_paths):
+        image = load_image(image_path=image_path)
+        image_width, image_height = image.size
+        image_data = ImageData(
+            image_id=idx,
+            file_name=image_path.name,
+            width=image_width,
+            height=image_height,
+        )
+        example = asdict(image_data)
+        example["image"] = image
+        example["annotations"] = []
         yield idx, example
 
 
@@ -255,7 +283,7 @@ class PubLayNetDataset(ds.GeneratorBasedBuilder):
     BUILDER_CONFIGS = [
         PubLayNetConfig(
             version=VERSION,
-            description="TBD",
+            description="PubLayNet is a dataset for document layout analysis.",
         )
     ]
 
@@ -264,7 +292,7 @@ class PubLayNetDataset(ds.GeneratorBasedBuilder):
             ds.Image()
             if self.config.decode_rle
             else {
-                "counts": ds.Sequence(ds.Value("binary")),
+                "counts": ds.Value("binary"),
                 "size": ds.Sequence(ds.Value("int32")),
             }
         )
@@ -344,19 +372,20 @@ class PubLayNetDataset(ds.GeneratorBasedBuilder):
             images=images,
             decode_rle=self.config.decode_rle,
         )
-        yield from generate_examples(
+        yield from generate_train_val_examples(
             annotations=annotations,
             image_dir=image_dir,
             images=images,
             categories=categories,
         )
 
+    def _generate_test_examples(self, image_dir: pathlib.Path):
+        yield from generate_test_examples(image_dir=image_dir)
+
     def _generate_examples(
         self, image_dir: pathlib.Path, label_path: Optional[pathlib.Path] = None
     ):
-        is_test = label_path is None
-
-        if not is_test:
+        if label_path is not None:
             yield from self._generate_train_val_examples(
                 image_dir=image_dir,
                 label_path=label_path,
