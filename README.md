@@ -6,7 +6,7 @@ language:
 language_creators:
 - found
 license:
-- cdla-permissive
+- cdla-permissive-1.0
 multilinguality:
 - monolingual
 pretty_name: PubLayNet
