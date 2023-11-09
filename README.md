@@ -42,6 +42,8 @@ task_ids:
 
 # Dataset Card for PubLayNet
 
+[![CI](https://github.com/shunk031/huggingface-datasets_PubLayNet/actions/workflows/ci.yaml/badge.svg)](https://github.com/shunk031/huggingface-datasets_PubLayNet/actions/workflows/ci.yaml)
+
 ## Table of Contents
 - [Dataset Card Creation Guide](#dataset-card-creation-guide)
   - [Table of Contents](#table-of-contents)
