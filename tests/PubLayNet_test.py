@@ -20,5 +20,18 @@ def dataset_path() -> str:
     argnames=("decode_rle"),
     argvalues=(False, True),
 )
-def test_load_dataset(dataset_path: str, decode_rle: bool):
+@pytest.mark.parametrize(
+    argnames=("expected_num_train", "expected_num_valid", "expected_num_test"),
+    argvalues=((335703, 11245, 11405),),
+)
+def test_load_dataset(
+    dataset_path: str,
+    decode_rle: bool,
+    expected_num_train: int,
+    expected_num_valid: int,
+    expected_num_test: int,
+):
     dataset = ds.load_dataset(path=dataset_path, decode_rle=decode_rle)
+    assert dataset["train"].num_rows == expected_num_train
+    assert dataset["validation"].num_rows == expected_num_valid
+    assert dataset["test"].num_rows == expected_num_test
