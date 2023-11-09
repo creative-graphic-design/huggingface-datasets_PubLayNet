@@ -6,7 +6,7 @@ language:
 language_creators:
 - found
 license:
-- cdla-permissive
+- cdla-permissive-1.0
 multilinguality:
 - monolingual
 pretty_name: PubLayNet
@@ -41,6 +41,8 @@ task_ids:
 ---
 
 # Dataset Card for PubLayNet
+
+[![CI](https://github.com/shunk031/huggingface-datasets_PubLayNet/actions/workflows/ci.yaml/badge.svg)](https://github.com/shunk031/huggingface-datasets_PubLayNet/actions/workflows/ci.yaml)
 
 ## Table of Contents
 - [Dataset Card Creation Guide](#dataset-card-creation-guide)
