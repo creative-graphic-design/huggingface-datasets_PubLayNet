@@ -9,6 +9,21 @@ def dataset_path() -> str:
     return "PubLayNet.py"
 
 
+@pytest.fixture
+def organization() -> str:
+    return "pytorch-layout-generation"
+
+
+@pytest.fixture
+def repo_name() -> str:
+    return "PubLayNet"
+
+
+@pytest.fixture
+def repo_id(organization: str, repo_name: str) -> str:
+    return f"{organization}/{repo_name}"
+
+
 @pytest.mark.skipif(
     condition=bool(os.environ.get("CI", False)),
     reason=(
@@ -27,6 +42,7 @@ def dataset_path() -> str:
 def test_load_dataset(
     dataset_path: str,
     decode_rle: bool,
+    repo_id: str,
     expected_num_train: int,
     expected_num_valid: int,
     expected_num_test: int,
@@ -35,3 +51,5 @@ def test_load_dataset(
     assert dataset["train"].num_rows == expected_num_train
     assert dataset["validation"].num_rows == expected_num_valid
     assert dataset["test"].num_rows == expected_num_test
+
+    dataset.push_to_hub(repo_id=repo_id)
